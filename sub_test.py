@@ -71,8 +71,8 @@ def evaluate_metrics(detected_objects, ground_truth):
     missed_images = all_ground_truth_images - all_detected_images
     total_score += len(missed_images) * detection_points['missed']
     n = len(ground_truth)
-    print(total_score)
-    return total_score / n*6
+    print(f"Raw score: {total_score}  Max raw score {n * 6}")
+    return total_score / (n * 6)
 
 # Example usage:
 names = ["Name", "Bbox","Class"]
