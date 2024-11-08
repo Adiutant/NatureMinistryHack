@@ -1,81 +1,85 @@
+import numpy as np
 import pandas as pd
+import torch
+import torchvision.ops.boxes as bops
 
-def calculate_iou(box_a, box_b):
-    """ Calculate the Intersection over Union (IoU) of two bounding boxes. """
-    xa1, ya1, wa, ha = box_a
+
+def calculate_iou_vectorized(detected_bboxes, gt_bboxes):
+    # Extract coordinates
+    xa1, ya1, wa, ha = detected_bboxes[:, 0], detected_bboxes[:, 1], detected_bboxes[:, 2], detected_bboxes[:, 3]
+    xb1, yb1, wb, hb = gt_bboxes[:, 0], gt_bboxes[:, 1], gt_bboxes[:, 2], gt_bboxes[:, 3]
+
+    # Convert center (xc, yc) to (x1, y1)
+    xa1, ya1 = xa1 - wa / 2, ya1 - ha / 2
     xa2, ya2 = xa1 + wa, ya1 + ha
-    xb1, yb1, wb, hb = box_b
+    xb1, yb1 = xb1 - wb / 2, yb1 - hb / 2
     xb2, yb2 = xb1 + wb, yb1 + hb
 
-    inter_width = max(0, min(xa2, xb2) - max(xa1, xb1))
-    inter_height = max(0, min(ya2, yb2) - max(ya1, yb1))
+    # Calculate intersection
+    inter_width = np.maximum(0, np.minimum(xa2, xb2) - np.maximum(xa1, xb1))
+    inter_height = np.maximum(0, np.minimum(ya2, yb2) - np.maximum(ya1, yb1))
     inter_area = inter_width * inter_height
 
+    # Calculate union
     box_a_area = wa * ha
     box_b_area = wb * hb
     union_area = box_a_area + box_b_area - inter_area
 
-    iou = inter_area / union_area if union_area != 0 else 0
+    iou = inter_area / union_area
     return iou
 
 
-def evaluate_metrics(detected_objects, ground_truth, correct_classifications):
-    """
-    Parameters:
-    - detected_objects: list of tuples (image_name, bbox, predicted_class)
-    - ground_truth: list of tuples (image_name, bbox, true_class)
-    - correct_classifications: dictionary mapping image_name to correct class label
-
-    Returns:
-    - total_score: int, the final computed metric score
-    """
+def evaluate_metrics(detected_objects, ground_truth):
     iou_threshold = 0.5
     classification_points = {'correct': 5, 'wrong': -5}
     detection_points = {'correct': 1, 'missed': -1, 'false_positive': -1}
 
-    total_score = 0
-    used_ground_truths = set()
+    # Merge detected and ground truth data on image name
+    merged_df = pd.merge(detected_objects, ground_truth, on="Name", suffixes=('_det', '_gt'))
 
-    # Calculate detection score
-    for detected in detected_objects:
-        print(detected)
-        image_name, detected_bbox, detected_class = detected
-        best_iou = 0
-        best_gt = None
+    # Convert bbox strings to float arrays
+    detected_bboxes = merged_df['Bbox_det'].apply(lambda x: list(map(float, x.split(',')))).tolist()
+    gt_bboxes = merged_df['Bbox_gt'].apply(lambda x: list(map(float, x.split(',')))).tolist()
 
-        for gt in ground_truth:
-            gt_image_name, gt_bbox, true_class = gt
-            if gt_image_name == image_name and gt not in used_ground_truths:
-                iou = calculate_iou(detected_bbox, gt_bbox)
-                if iou > best_iou:
-                    best_iou = iou
-                    best_gt = gt
+    detected_bboxes = np.array(detected_bboxes)
+    gt_bboxes = np.array(gt_bboxes)
 
-        if best_iou > iou_threshold:
-            used_ground_truths.add(best_gt)
-            total_score += detection_points['correct']
+    # Calculate IoU for each pair of detected and ground truth bboxes
+    ious = calculate_iou_vectorized(detected_bboxes, gt_bboxes)
 
-            # Classification score
-            _, _, true_class = best_gt
-            if detected_class == true_class:
-                total_score += classification_points['correct']
-            else:
-                total_score += classification_points['wrong']
-        else:
-            total_score += detection_points['false_positive']
+    # Determine correct detections based on IoU threshold
+    correct_detections_mask = ious > iou_threshold
+    correct_detections = merged_df[correct_detections_mask]
 
-    for image_name, _, _ in ground_truth:
-        if image_name not in (x[0] for x in detected_objects):
-            total_score += detection_points['missed']
+    # Calculate scores for correct detections
+    total_score = (correct_detections['Class_det'] == correct_detections['Class_gt']).sum() * classification_points[
+        'correct']
+    total_score += (correct_detections['Class_det'] != correct_detections['Class_gt']).sum() * classification_points[
+        'wrong']
 
-    return total_score
+    # Add detection points for correct detections
+    total_score += correct_detections_mask.sum() * detection_points['correct']
 
+    # Calculate false positives
+    false_positives = (~correct_detections_mask).sum()
+    total_score += false_positives * detection_points['false_positive']
+
+    # Calculate missed detections
+    all_detected_images = set(detected_objects["Name"])
+    all_ground_truth_images = set(ground_truth["Name"])
+
+    missed_images = all_ground_truth_images - all_detected_images
+    total_score += len(missed_images) * detection_points['missed']
+    n = len(ground_truth)
+    print(total_score)
+    return total_score / n*6
 
 # Example usage:
-detected_objects = list(pd.read_csv('submissions/submission.csv').itertuples(index=False, name=None))
+names = ["Name", "Bbox","Class"]
+detected_objects = pd.read_csv('submissions/submission.csv',names= names, header=0)
 print(detected_objects)
 
-ground_truth = list(pd.read_csv('submissions/annotation.csv').itertuples(index=False, name=None))
+ground_truth = pd.read_csv('submissions/annotation.csv',names= names,header=0)
 
-score = evaluate_metrics(detected_objects, ground_truth, {})
+score = evaluate_metrics(detected_objects, ground_truth)
 print("Total Score:", score)

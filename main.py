@@ -28,7 +28,7 @@ def process_folders(folders, model, output_csv):
     df.to_csv(output_csv, index=False)
 
 if __name__ == "__main__":
-    yolo_model_path = 'models/v8_augmented.pt'
+    yolo_model_path = 'models/v8not_augmented.pt'
     model = QualityModel(yolo_model_path)
     folders_to_process = ['/home/roman/train_dataset_train_data_minprirodi/train_data_minprirodi/images',
                           '/home/roman/train_dataset_train_data_minprirodi/train_data_minprirodi/images_empty']
