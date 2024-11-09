@@ -17,8 +17,8 @@ YOLO_CLASS = os.getenv("YOLO_CLASSIFICATOR")
 model_config = {
     "detector" : "yolo",
     "detector_path" : YOLO_MODEL,
-    "classificator": "disable",
-    "classificator_path" : YOLO_CLASS
+    "classificator": "resnet",
+    "classificator_path" : RESNET_MODEL
 }
 
 def process_folders(folders, model, output_csv):

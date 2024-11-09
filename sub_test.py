@@ -50,14 +50,16 @@ def evaluate_metrics(detected_objects, ground_truth):
     # Determine correct detections based on IoU threshold
     correct_detections_mask = ious > iou_threshold
     correct_detections = merged_df[correct_detections_mask]
-    print(sum(correct_detections_mask))
+    print(f"Percent of right boxes: {sum(correct_detections_mask) / len(correct_detections_mask)}")
+
 
     # Calculate scores for correct detections
     total_score = (correct_detections['Class_det'] == correct_detections['Class_gt']).sum() * classification_points[
         'correct']
     total_score += (correct_detections['Class_det'] != correct_detections['Class_gt']).sum() * classification_points[
         'wrong']
-
+    print(f"""Percent of right classes: {(correct_detections['Class_det'] == correct_detections['Class_gt']).sum() /
+                                     len(correct_detections['Class_gt'])}""")
     # Add detection points for correct detections
     total_score += correct_detections_mask.sum() * detection_points['correct']
 

@@ -22,7 +22,7 @@ YOLO_CLASS = os.getenv("YOLO_CLASSIFICATOR")
 model_config = {
     "detector" : "yolo",
     "detector_path" : YOLO_MODEL,
-    "classificator": "resnet",
+    "classificator": "disable",
     "classificator_path" : RESNET_MODEL
 }
 
@@ -84,7 +84,7 @@ def compute_photo():
     path = os.path.join(temp_dir.name, filename)
     result = application.compute_labels(path)
     transformed_result = transform_result(result)
-    return jsonify({"annotations" : transformed_result, "images":[filename]}, 200)
+    return jsonify({"annotations" : transformed_result, "images":[filename]}), 200
 
 
 @app.route('/compute_zip', methods=['POST'])
@@ -120,7 +120,7 @@ def compute_zip():
             image_result = application.compute_labels(name)
             result.append(transform_result(image_result))
             files_list.append(name)
-    return jsonify({"annotations": result, "images":files_list}, 200)
+    return jsonify({"annotations": result, "images":files_list}), 200
 
 
 run_application()
