@@ -74,7 +74,7 @@ def compute_photo():
     response.close()
     path = os.path.join(temp_dir.name, filename)
     result = application.compute_labels(path)
-    transformed_result = transform_result(result, filename)
+    transformed_result = transform_result(result)
     return jsonify({"annotations" : transformed_result, "images":[filename]}, 200)
 
 
