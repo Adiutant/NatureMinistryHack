@@ -3,9 +3,23 @@ import os
 
 import cv2
 import pandas as pd
+from dotenv import load_dotenv
+
 import sub_test
 from pt_models.model import QualityModel
 
+load_dotenv()
+
+YOLO_MODEL = os.getenv("YOLO_DETECTOR")
+RESNET_MODEL=os.getenv("RESNET_CLASSIFICATOR")
+YOLO_CLASS = os.getenv("YOLO_CLASSIFICATOR")
+
+model_config = {
+    "detector" : "yolo",
+    "detector_path" : YOLO_MODEL,
+    "classificator": "disable",
+    "classificator_path" : YOLO_CLASS
+}
 
 def process_folders(folders, model, output_csv):
     data = []
@@ -20,7 +34,7 @@ def process_folders(folders, model, output_csv):
                     if image is not None:
                         output_dict = model(image, file)
 
-                        for i, info in output_dict.items():
+                        for info in output_dict:
                             bbox_str = ','.join(map(str, info['bbox']))
                             data.append({'Name': file, 'Bbox': bbox_str, 'Class': info['class']})
 
@@ -28,13 +42,14 @@ def process_folders(folders, model, output_csv):
     df.to_csv(output_csv, index=False)
 
 if __name__ == "__main__":
-    folder_models = "models"
+    folder_models = "models/detector"
     best_score = {"score":0, "model":""}
     for root, _, files in os.walk(folder_models):
         for file in files:
             if file.lower().endswith('.pt'):
                 yolo_model_path = os.path.join(root, file)
-                model = QualityModel(yolo_model_path)
+                model_config["detector_path"] = yolo_model_path
+                model = QualityModel(model_config)
                 folders_to_process = ['/home/roman/train_dataset_train_data_minprirodi/train_data_minprirodi/images',
                           '/home/roman/train_dataset_train_data_minprirodi/train_data_minprirodi/images_empty']
                 output_csv_path = 'submissions/submission.csv'

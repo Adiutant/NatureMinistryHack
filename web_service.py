@@ -15,11 +15,20 @@ from pt_models.model import QualityModel
 
 load_dotenv()
 
-YOLO_MODEL = os.getenv("YOLO_MODEL")
+YOLO_MODEL = os.getenv("YOLO_DETECTOR")
+RESNET_MODEL=os.getenv("RESNET_CLASSIFICATOR")
+YOLO_CLASS = os.getenv("YOLO_CLASSIFICATOR")
+
+model_config = {
+    "detector" : "yolo",
+    "detector_path" : YOLO_MODEL,
+    "classificator": "resnet",
+    "classificator_path" : RESNET_MODEL
+}
 
 class MainApplication:
     def __init__(self):
-        self.model = QualityModel(YOLO_MODEL)
+        self.model = QualityModel(model_config)
 
     def compute_labels(self, image_path):
         image = cv2.imread(image_path)
