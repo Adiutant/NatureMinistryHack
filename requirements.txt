@@ -3,3 +3,9 @@ torch
 opencv-python
 pandas
 torchvision
+Flask
+PyYAML
+numpy
+python-dotenv
+requests
+tqdm

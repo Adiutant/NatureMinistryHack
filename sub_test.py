@@ -50,6 +50,7 @@ def evaluate_metrics(detected_objects, ground_truth):
     # Determine correct detections based on IoU threshold
     correct_detections_mask = ious > iou_threshold
     correct_detections = merged_df[correct_detections_mask]
+    print(sum(correct_detections_mask))
 
     # Calculate scores for correct detections
     total_score = (correct_detections['Class_det'] == correct_detections['Class_gt']).sum() * classification_points[
@@ -75,11 +76,12 @@ def evaluate_metrics(detected_objects, ground_truth):
     return total_score / (n * 6)
 
 # Example usage:
-names = ["Name", "Bbox","Class"]
-detected_objects = pd.read_csv('submissions/submission.csv',names= names, header=0)
-print(detected_objects)
+if __name__ == "__main__":
+    names = ["Name", "Bbox","Class"]
+    detected_objects = pd.read_csv('submissions/submission.csv',names= names, header=0)
+    print(detected_objects)
 
-ground_truth = pd.read_csv('submissions/annotation.csv',names= names,header=0)
+    ground_truth = pd.read_csv('submissions/annotation.csv',names= names,header=0)
 
-score = evaluate_metrics(detected_objects, ground_truth)
-print("Total Score:", score)
+    score = evaluate_metrics(detected_objects, ground_truth)
+    print("Total Score:", score)
