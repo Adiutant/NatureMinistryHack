@@ -13,12 +13,13 @@ load_dotenv()
 YOLO_MODEL = os.getenv("YOLO_DETECTOR")
 RESNET_MODEL=os.getenv("RESNET_CLASSIFICATOR")
 YOLO_CLASS = os.getenv("YOLO_CLASSIFICATOR")
+CATBOOST_CLASS = os.getenv("CATBOOST_CLASSIFICATOR")
 
 model_config = {
     "detector" : "yolo",
     "detector_path" : YOLO_MODEL,
-    "classificator": "resnet",
-    "classificator_path" : RESNET_MODEL
+    "classificator": "disabled",
+    "classificator_path" : CATBOOST_CLASS
 }
 
 def process_folders(folders, model, output_csv):
