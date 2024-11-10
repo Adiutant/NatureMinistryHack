@@ -82,7 +82,7 @@ class QualityModel(torch.nn.Module):
         self.min_size = min_size
 
     def forward(self, image, file_name):
-        results = self.detector(image, iou=0.8, conf =0.35, verbose=False)
+        results = self.detector(image, iou=0.7, conf =0.25, verbose=False)
         output_list = []
         height, width, _ = image.shape
         for result in results:
@@ -110,11 +110,6 @@ class QualityModel(torch.nn.Module):
                 ) else 1
                 ### heuristic
 
-                ### ФЛИПНУТЬ КЛАСС
-                if class_id == 1:
-                    if float(box.conf) < 0.75:
-                        class_id = 0
-                ###
 
                 if (x2 - x1) > self.min_size and (y2 - y1) > self.min_size:
                     class_id = class_id  & is_near_border
